@@ -122,12 +122,3 @@ func DeleteDetails(db *sql.DB, targetID int) (int64, error) {
 
 	return result.RowsAffected()
 }
-
-func DeletePhoneNumber(db *sql.DB, targetID int) (int64, error) {
-	result, err := db.Exec(`UPDATE PRODUCTS SET PHONENUMBER = '' WHERE ID = ?`, targetID)
-	if err != nil {
-		return 0, err
-	}
-
-	return result.RowsAffected()
-}

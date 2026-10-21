@@ -5,6 +5,8 @@ import (
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"log"
+	"errors"
+	"net/http"
 )
 
 func OpenDB() (*sql.DB, error) {
@@ -73,4 +75,19 @@ func Util() {
 	} else {
 		fmt.Println("rows are effected :", deletedRows)
 	}
+}
+
+func VerifyRows(rowsAffected int,id int, w http.ResponseWriter, db *sql.DB){
+
+	if rowsAffected == 0 {
+			if _, err := FindRows(db, id); err != nil {
+				if errors.Is(err, sql.ErrNoRows) {
+					http.Error(w, "details not found", http.StatusNotFound)
+					return
+				}
+				log.Printf("failed to verify details %d after phone update: %v", id, err)
+				http.Error(w, "failed to update phone number", http.StatusInternalServerError)
+				return
+			}
+		}
 }

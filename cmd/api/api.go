@@ -14,6 +14,7 @@ import (
 func API(db *sql.DB) {
 	mux := http.NewServeMux()
 
+	//get all the details of rows
 	mux.HandleFunc("GET /info", func(w http.ResponseWriter, r *http.Request) {
 		details, err := sqlMethods.ReturnAllDetails(db)
 		if err != nil {
@@ -27,6 +28,7 @@ func API(db *sql.DB) {
 		}
 	})
 
+	//insert values of given data 
 	mux.HandleFunc("POST /info", func(w http.ResponseWriter, r *http.Request) {
 
 		var details sqlMethods.Details
@@ -44,9 +46,9 @@ func API(db *sql.DB) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated) // HTTP 201 Created
 		fmt.Fprintf(w, `{"status": %d, "message": "details created successfully"}`, status)
-
 	})
 
+	//delete rows of given id 
 	mux.HandleFunc("DELETE /info/{id}", func(w http.ResponseWriter, r *http.Request) {
 
 		id, err := strconv.Atoi(r.PathValue("id"))
@@ -66,6 +68,8 @@ func API(db *sql.DB) {
 			return
 		}
 
+		sqlMethods.VerifyRows(int(rowsAffected),id,w,db)
+
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(map[string]any{
 			"deleted": true,
@@ -75,6 +79,7 @@ func API(db *sql.DB) {
 		}
 	})
 
+	//find rows of given id 
 	mux.HandleFunc("GET /info/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id, err := strconv.Atoi(r.PathValue("id"))
 		if err != nil {
@@ -98,6 +103,7 @@ func API(db *sql.DB) {
 		}
 	})
 
+	//update phone number of given id
 	mux.HandleFunc("PATCH /info/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id, err := strconv.Atoi(r.PathValue("id"))
 		if err != nil {
@@ -124,17 +130,7 @@ func API(db *sql.DB) {
 			return
 		}
 
-		if rowsAffected == 0 {
-			if _, err := sqlMethods.FindRows(db, id); err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					http.Error(w, "details not found", http.StatusNotFound)
-					return
-				}
-				log.Printf("failed to verify details %d after phone update: %v", id, err)
-				http.Error(w, "failed to update phone number", http.StatusInternalServerError)
-				return
-			}
-		}
+		sqlMethods.VerifyRows(int(rowsAffected),id,w,db)
 
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(map[string]any{
